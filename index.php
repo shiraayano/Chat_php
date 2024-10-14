@@ -1,15 +1,19 @@
 <?php
-/*
+/**
 *源码作者:阿豆子(QQ:1355967533)
 *项目开始时间:2020年2月3日
 *
-*When I wrote this code, only God and I knew what it meant.
-*Only God knows now.
+When I wrote this code, only God and I knew what it meant.
+Only God knows now.
 */
 
-/*
-配置信息
-注:变量名请勿乱改，否则可能导致程序无法正常运行
+/**
+*配置信息
+*$Upimages = 'true';
+*上传图片 默认true
+*$Uppassword = "adouzi";
+*上传文件密码 默认adouzi
+注:变量名请谨慎修改，否则可能导致程序无法正常运行
 */
 
 /**
@@ -50,6 +54,21 @@ $Upimages = 'true';
 $Uppassword = "adouzi";
 //上传文件密码 默认adouzi
 
+function deleteCookie($name) {
+    setcookie($name, '', 0, '/');
+}
+//删除cookie
+
+// function stream_socket_client($host, $port = -1, $errno, $errstr, $timeout = 30) {
+//   $ip = gethostbyname($host);
+//   $sock = socket_create(AF_INET, SOCK_STREAM, SOL_TCP);
+//   socket_set_option($sock, SOL_SOCKET, SO_RCVTIMEO, array('sec' => $timeout, 'usec' => 0));
+//   socket_set_option($sock, SOL_SOCKET, SO_SNDTIMEO, array('sec' => $timeout, 'usec' => 0));
+//   socket_connect($sock, $ip, $port);
+//   return $sock;
+// }
+//socket函数
+
 //统计总使用次数
 $counter = intval(@file_get_contents("times.txt"));
 $counter++;
@@ -85,9 +104,9 @@ if (@$_GET['id'] == "msg") {
   exit();
 } else if (@$_GET['id'] == "[清除]") {
   //清除用户名
-  setcookie("用户名", '');
+  @setcookie("用户名", '');
   //删除聊天文件
-  unlink("news.txt");
+  @unlink("news.txt");
   //刷新ajax参数
   ajaxfile();
 
@@ -143,9 +162,9 @@ window.location.href="index.php";
   exit;
 } else if (@$_GET['id'] == 'unset') {
   //重置高级设置
-  @setcookie('背景图片', null, -1, '/');
-  @setcookie('背景颜色', null, -1, '/');
-  @setcookie('自定义样式', null, -1, '/');
+  deleteCookie('背景图片');
+  deleteCookie('背景颜色');
+  deleteCookie('自定义样式');
   echo '
 <script>
 alert("     配置成功！\n如果没有效果请手动删除cookie");
@@ -291,7 +310,8 @@ text-decoration:none;
 是否允许上传图片:' . $YN . '</p><br>
 <a href="?id=gengxin">检查更新</a><br>
 <a href="?id=weilai">展望未来</a><br>
-<a href="index.php">返回</a>';
+<a href="index.php">返回</a><br>';
+echo "<a href='https://github.com/shiraayano/Chat_php/'>仓库地址</a>";
   //检测upload目录
   if (!is_dir('upload')) {
     mkdir('upload');
@@ -307,12 +327,13 @@ text-decoration:none;
   exit;
 } else if (@$_GET['id'] == 'gengxin') {
   //检查更新
-  //此功能待维护
-  $yuan = @file_get_contents("http://www.adouzi56.ml/api/gengxin/?id=gengxin-lts&banben=7.01");
-  @preg_match('/<p id="zhuangtai">(.*?)<\/p>/', $yuan, $ma);
-  if (@$ma[1] == 'ok') {
-    echo '<html> <head><meta charset="utf-8">
-<link rel="icon" href="http://cdn.u1.huluxia.com/g3/M01/EA/20/wKgBOV4k70aAVFkMAACSNDCr8Yk703.jpg_160x160.jpeg"><title>源码最新信息</title><style>
+  echo '
+<html> 
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="http://cdn.u1.huluxia.com/g3/M01/EA/20/wKgBOV4k70aAVFkMAACSNDCr8Yk703.jpg_160x160.jpeg">
+<title>检查更新</title>
+<style>
 *{
 text-align:center;
 }
@@ -320,13 +341,69 @@ a{
 font-size:8pt;
 text-decoration:none;
 }
-</style></head><body>';
-    echo $yuan;
-  } else {
-    echo '<html style="text-align:center;"><head><meta charset="utf-8"><link rel="icon" href="http://cdn.u1.huluxia.com/g3/M01/EA/20/wKgBOV4k70aAVFkMAACSNDCr8Yk703.jpg_160x160.jpeg"><title>错误</title></head><body><p><font color="red">error!<br>获取版本信息失败!<br>请手动查询<br>请到葫芦侠社区or哔哩哔哩搜索php聊天室</font></p></body></html>';
-  }
-  echo '<a href="index.php" class="a">返回</a><br></body></html>';
-  exit;
+</style>
+</head>
+<body>
+<h3>检查更新</h3>
+';
+// 定义要检查的版本
+/**
+ 程序更新
+ 待完善
+ */
+$currentVersion = '7.01';
+
+// 访问 Github 仓库中的版本信息
+try {
+    $updateInfo = @file_get_contents("https://api.github.com/repos/shiraayano/Chat_php/releases/latest");
+} catch (Exception $e) {
+    echo "无法访问 Github API： " . $e->getMessage();
+    return;
+}
+
+// 解析版本信息
+try {
+    $latestVersion = @json_decode($updateInfo, true)['tag_name'];
+} catch (Exception $e) {
+    echo "无法解析 JSON： " . $e->getMessage();
+    return;
+}
+
+// 比较当前版本和最新版本
+if ($latestVersion > $currentVersion) {
+    echo "检测到新版本：".$latestVersion."<br>";
+    echo "请选择更新方式：<br>";
+    echo "<a href='https://github.com/shiraayano/Chat_php/'>手动更新</a>";
+    echo "<br>";
+    echo "<a href='update.php'>自动更新</a>";
+} else {
+    echo "你已经是最新版了！";
+}
+
+echo '<br><a href="index.php" class="a">返回</a><br></body></html>';
+
+
+//此段功能已废弃
+//   $yuan = @file_get_contents("http://www.adouzi56.ml/api/gengxin/?id=gengxin-lts&banben=7.01");
+//   @preg_match('/<p id="zhuangtai">(.*?)<\/p>/', $yuan, $ma);
+//   if (@$ma[1] == 'ok') {
+//     echo '<html> <head><meta charset="utf-8">
+// <link rel="icon" href="http://cdn.u1.huluxia.com/g3/M01/EA/20/wKgBOV4k70aAVFkMAACSNDCr8Yk703.jpg_160x160.jpeg"><title>源码最新信息</title><style>
+// *{
+// text-align:center;
+// }
+// a{
+// font-size:8pt;
+// text-decoration:none;
+// }
+// </style></head><body>';
+//     echo $yuan;
+//   } else {
+//     echo '<html style="text-align:center;"><head><meta charset="utf-8"><link rel="icon" href="http://cdn.u1.huluxia.com/g3/M01/EA/20/wKgBOV4k70aAVFkMAACSNDCr8Yk703.jpg_160x160.jpeg"><title>错误</title></head><body><p><font color="red">error!<br>获取版本信息失败!<br>请手动查询<br>请到葫芦侠社区or哔哩哔哩搜索php聊天室</font></p></body></html>';
+//   }
+//   echo '<a href="index.php" class="a">返回</a><br></body></html>';
+   exit;
+
 }
 
 /*用户协议*/
@@ -348,6 +425,63 @@ window.location.href="index.php";
   <link rel="icon" href="http://cdn.u1.huluxia.com/g3/M01/EA/20/wKgBOV4k70aAVFkMAACSNDCr8Yk703.jpg_160x160.jpeg">
   <title>阿豆子的聊天室</title>
   <style>
+
+<?php
+                              //自定义背景图片
+    if (@$_COOKIE['背景图片'] == null) {
+    //echo 'https://api.adou-web.eu.org/?id=background_mobile';
+    echo "
+    body {
+      text-align:center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: url('https://api.adou-web.eu.org/?id=background_mobile') no-repeat center center fixed;
+      background-size: cover;
+      color: #333;
+      line-height: 1.6;
+    } 
+
+    /* 响应式设计 - 手机尺寸 */
+  @media screen and (min-width: 320px) and (max-width: 767px) {
+    body {
+        background: url('https://api.adou-web.eu.org/?id=background_mobile') no-repeat center center fixed;
+        background-size: cover;
+    }
+  }
+
+  /* 响应式设计 - 平板尺寸 */
+  @media screen and (min-width: 768px) and (max-width: 1024px) {
+    body {
+        background: url('https://api.adou-web.eu.org/?id=background_tablet') no-repeat center center fixed;
+        background-size: cover;
+    }
+  }
+
+  /* 响应式设计 - 大屏幕设备尺寸 */
+  @media screen and (min-width: 1025px) {
+    body {
+        background: url('https://api.adou-web.eu.org/?id=background_pc') no-repeat center center fixed;
+        background-size: cover;
+    }
+  }
+     ";
+    } else {
+      echo "
+      body {
+        background-image: url('".@$_COOKIE['背景图片']."') no-repeat center center fixed;
+        background-size: cover;
+        text-align:center;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        color: #333;
+        line-height: 1.6;
+      }";
+    }
+    ?>
+      
+
     body {
       text-align: center;
       
@@ -361,7 +495,6 @@ window.location.href="index.php";
                         }
                         ?>;
     }
-
     h1 {
       margin-top: 8%;
     }
@@ -372,57 +505,6 @@ window.location.href="index.php";
       border-radius: 5px / 5px;
     }
 
-
-
-
-body {
-    text-align:center;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    margin: 0;
-    padding: 0;
-    background: url('https://api.adou-web.eu.org/?id=background_mobile') no-repeat center center fixed;
-    background-size: cover;
-    color: #333;
-    line-height: 1.6;
-}
-
-/* 响应式设计 - 手机尺寸 */
-@media screen and (min-width: 320px) and (max-width: 767px) {
-    body {
-        background: url('https://api.adou-web.eu.org/?id=background_mobile') no-repeat center center fixed;
-        background-size: cover;
-    }
-}
-
-/* 响应式设计 - 平板尺寸 */
-@media screen and (min-width: 768px) and (max-width: 1024px) {
-    body {
-        background: url('https://api.adou-web.eu.org/?id=background_tablet') no-repeat center center fixed;
-        background-size: cover;
-    }
-}
-
-/* 响应式设计 - 大屏幕设备尺寸 */
-@media screen and (min-width: 1025px) {
-    body {
-        background: url('https://api.adou-web.eu.org/?id=background_pc') no-repeat center center fixed;
-        background-size: cover;
-    }
-}
-
-body {
-      <?php
-                              //自定义背景图片
-                              if (@$_COOKIE['背景图片'] == null) {
-                                //echo 'https://api.adou-web.eu.org/?id=background_mobile';
-                              } else {
-                                echo "background-image: url('".@$_COOKIE['背景图片']."') no-repeat center center fixed;
-        background-size: cover;";
-                              }
-                              ?>
-      
-
-    }
     .form {
       text-align: center;
       margin: 3% 30%;
@@ -462,7 +544,18 @@ body {
       white-space: pre-wrap;
       text-overflow: ellipsis;
       background-color: white;
+      /*半透明 */
+      opacity: 0.8;
+    }
 
+    .msg::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .msg::-webkit-scrollbar-thumb {
+      border-radius: 10px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.2);
     }
 
     .fieldset {
@@ -487,6 +580,20 @@ body {
       width: 70%;
       margin-left: 3%;
     }
+    .textarea-input,.file,.form-submit,.from-input{
+    opacity: 0.8;
+    }
+
+    /* .textarea-input,.file,.form-submit,.from-input {
+      width: 5px;
+    }
+
+    .textarea-input,.file,.form-submit,.from-input {
+      border-radius: 10px;
+      box-shadow: inset 0 0 5px rgba(0, 0, 0, 0.2);
+      background: rgba(0, 0, 0, 0.2);
+    } */
+
 
     <?php
 
@@ -664,7 +771,7 @@ body {
 
         <?php
         if ($Upimages == 'true') {
-          echo '<br><input type="file" name="file">';
+          echo '<br><input type="file" name="file" class="file">';
         }
         ?>
 
